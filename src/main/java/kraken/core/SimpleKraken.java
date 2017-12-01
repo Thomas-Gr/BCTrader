@@ -1,5 +1,6 @@
 package kraken.core;
 
+import static kraken.Constants.BLOCKCHAIN_TO_CONSIDER;
 import static kraken.Constants.LIMIT;
 
 import java.io.IOException;
@@ -154,6 +155,7 @@ public class SimpleKraken implements Kraken {
     public void cancelOldQueries() throws Exception {
         openOrders.getResult().getClosed().entrySet().stream()
                 .filter(order -> order.getValue().getDescr().get("type").equals("buy"))
+                .filter(order -> BLOCKCHAIN_TO_CONSIDER.contains(order.getValue().getDescr().get("pair")))
                 .filter(SimpleKraken::isOldEnough)
                 .map(Map.Entry::getKey)
                 .forEach(key -> {
