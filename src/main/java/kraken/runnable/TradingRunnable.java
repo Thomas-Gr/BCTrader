@@ -22,7 +22,7 @@ public class TradingRunnable extends Runnable {
     private final Trader trader;
 
     public TradingRunnable() throws Exception {
-        super(20, 120);
+        super(20, 20);
         this.trader = new SimpleTrader();
         this.kraken = getKraken();
     }
@@ -35,13 +35,13 @@ public class TradingRunnable extends Runnable {
 
         Optional<Double> shouldBuy = trader.shouldBuy(currentValue, latestResults);
         if (shouldBuy.isPresent()) {
-            trader.informBuy();
             if (kraken.canBuy(VOLUME, currentValue, shouldBuy.get())) {
                 kraken.buyThenSell(42, VOLUME, currentValue, shouldBuy.get());
                 logger.info(String.format("Buy at %s", currentValue));
             } else {
                 logger.info(String.format("Should but can't buy at %s", currentValue));
             }
+            trader.informBuy();
         } else {
             logger.info(String.format("Nothing to do at %s", currentValue));
         }

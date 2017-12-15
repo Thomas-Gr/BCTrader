@@ -3,7 +3,6 @@ package kraken.core;
 import static kraken.Constants.BLOCKCHAIN_TO_CONSIDER;
 import static kraken.Constants.LIMIT;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -48,7 +47,7 @@ public class SimpleKraken implements Kraken {
     }
 
     @Override
-    public double volumeOfInflightOrders() throws Exception {
+    public double volumeOfInflightOrders() {
         refreshOpenOrders();
 
         return openOrders.getResult().getClosed().values().stream()
@@ -59,30 +58,34 @@ public class SimpleKraken implements Kraken {
     }
 
     @Override
-    public void buyThenSell(int userId, double volume, double buyPrice, double sellPrice) throws Exception {
-        logger.info(String.format(
-                "Buying %s %s at %s to sell at %s (+%.3f euros)",
-                volume,
-                source,
-                buyPrice,
-                sellPrice,
-                gain(volume, buyPrice, sellPrice)));
+    public void buyThenSell(int userId, double volume, double buyPrice, double sellPrice) {
+        try {
+            logger.info(String.format(
+                    "Buying %s %s at %s to sell at %s (+%.3f euros)",
+                    volume,
+                    source,
+                    buyPrice,
+                    sellPrice,
+                    gain(volume, buyPrice, sellPrice)));
 
-        Map<String, String> input = ImmutableMap.<String, String>builder()
-                .put("pair", pair)
-                .put("type", "buy")
-                .put("oflags", "post,fciq")
-                .put("ordertype", "limit")
-                .put("price", String.valueOf(buyPrice))
-                .put("volume", String.valueOf(volume))
-                .put("userref", String.valueOf(userId))
-                .put("close[ordertype]", "limit")
-                .put("close[price]", String.valueOf(sellPrice))
-                .build();
+            Map<String, String> input = ImmutableMap.<String, String>builder()
+                    .put("pair", pair)
+                    .put("type", "buy")
+                    .put("oflags", "post,fciq")
+                    .put("ordertype", "limit")
+                    .put("price", String.valueOf(buyPrice))
+                    .put("volume", String.valueOf(volume))
+                    .put("userref", String.valueOf(userId))
+                    .put("close[ordertype]", "limit")
+                    .put("close[price]", String.valueOf(sellPrice))
+                    .build();
 
-        String response = api.queryPrivate(Method.ADD_ORDER, input);
+            String response = api.queryPrivate(Method.ADD_ORDER, input);
 
-        logger.info(response);
+            logger.info(response);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static double gain(double volume, double buy, double sell) {
@@ -90,69 +93,85 @@ public class SimpleKraken implements Kraken {
     }
 
     @Override
-    public boolean canBuy(double volume, double cost, Double sellPrice) throws Exception {
-        String s = api.queryPrivate(Method.BALANCE);
+    public boolean canBuy(double volume, double cost, Double sellPrice) {
+        try {
+            String s = api.queryPrivate(Method.BALANCE);
 
-        Matcher matcher = EURO_BALANCE.matcher(s);
+            Matcher matcher = EURO_BALANCE.matcher(s);
 
-        if (matcher.find()) {
-            double inflight = volumeOfInflightOrders();
-            Double euroBalance = Double.valueOf(matcher.group(1));
+            if (matcher.find()) {
+                double inflight = volumeOfInflightOrders();
+                Double euroBalance = Double.valueOf(matcher.group(1));
 
-            Double balance = euroBalance - inflight;
-            logger.info(String.format("Balance %s = %s - %s", balance, euroBalance, inflight));
+                Double balance = euroBalance - inflight;
+                logger.info(String.format("Balance %s = %s - %s", balance, euroBalance, inflight));
 
-            boolean hasAlreadyCloseOrder = openOrders.getResult().getClosed().entrySet().stream()
-                    .filter(order -> order.getValue().getDescr().get("type").equals("sell"))
-                    .map(order -> order.getValue().getDescr().get("price"))
-                    .map(Double::valueOf)
-                    .anyMatch(value -> Math.abs(value - sellPrice) < sellPrice / 500);
+                boolean hasAlreadyCloseOrder = openOrders.getResult().getClosed().entrySet().stream()
+                        .filter(order -> order.getValue().getDescr().get("type").equals("sell"))
+                        .map(order -> order.getValue().getDescr().get("price"))
+                        .map(Double::valueOf)
+                        .anyMatch(value -> Math.abs(value - sellPrice) < sellPrice / 500);
 
-            if (hasAlreadyCloseOrder) {
-                logger.info("There is already a close sell order for " + sellPrice);
-                return false;
+                if (hasAlreadyCloseOrder) {
+                    logger.info("There is already a close sell order for " + sellPrice);
+                    return false;
+                }
+
+                if (balance > LIMIT) {
+                    return true;
+                }
             }
 
-            if (balance > LIMIT) {
-                return true;
-            }
+            logger.info("Couldn't find euro balance in: " + s);
+            return false;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-
-        logger.info("Couldn't find euro balance in: " + s);
-        return false;
     }
 
     @Override
-    public List<OHLC> getPreviousResults() throws IOException {
-        Map<String, String> input = ImmutableMap.of("pair", source + target);
+    public List<OHLC> getPreviousResults() {
+        try {
+            Map<String, String> input = ImmutableMap.of("pair", source + target);
 
-        String response = api.queryPublic(Method.OHLC, input);
+            String response = api.queryPublic(Method.OHLC, input);
 
-        Trades trades = JsonParser.getObjectMapper().readValue(
-                response.replaceAll(pair, "numbers"),
-                Trades.class);
+            Trades trades = JsonParser.getObjectMapper().readValue(
+                    response.replaceAll(pair, "numbers"),
+                    Trades.class);
 
-        return Lists.reverse(trades.getResult().getNumbers());
+            return Lists.reverse(trades.getResult().getNumbers());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public void closedOrders() throws Exception {
-        String response = api.queryPrivate(Method.CLOSED_ORDERS);
+    public void closedOrders() {
+        try {
+            String response = api.queryPrivate(Method.CLOSED_ORDERS);
 
-        logger.info(response);
+            logger.info(response);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public void refreshOpenOrders() throws Exception {
-        String response = api.queryPrivate(Method.OPEN_ORDERS);
+    public void refreshOpenOrders() {
+            try {
+            String response = api.queryPrivate(Method.OPEN_ORDERS);
 
-        openOrders = JsonParser.getObjectMapper().readValue(
-                response,
-                OpenOrder.class);
+            openOrders = JsonParser.getObjectMapper().readValue(
+                    response,
+                    OpenOrder.class);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public void cancelOldQueries() throws Exception {
+    public void cancelOldQueries() {
         openOrders.getResult().getClosed().entrySet().stream()
                 .filter(order -> order.getValue().getDescr().get("type").equals("buy"))
                 .filter(order -> BLOCKCHAIN_TO_CONSIDER.contains(order.getValue().getDescr().get("pair")))

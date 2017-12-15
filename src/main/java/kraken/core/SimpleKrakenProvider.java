@@ -9,7 +9,7 @@ public class SimpleKrakenProvider {
     private static final Kraken kraken = new SimpleKraken(SOURCE, "EUR");
 
     public static Kraken getKraken() {
-        return kraken;
+        return new RetryerKraken(kraken);
     }
 
 }
