@@ -3,12 +3,14 @@ package kraken.core;
 import static kraken.util.RetryerHelper.exponentialRetry;
 
 import java.util.List;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import kraken.interfaces.Kraken;
 import kraken.types.OHLC;
+import kraken.types.ResultHistoryList;
 
 public class RetryerKraken implements Kraken {
 
@@ -45,8 +47,8 @@ public class RetryerKraken implements Kraken {
     }
 
     @Override
-    public void closedOrders() {
-        exponentialRetry(kraken::closedOrders);
+    public Set<ResultHistoryList> getTodaysHistory() {
+        return exponentialRetry(kraken::getTodaysHistory);
     }
 
     @Override

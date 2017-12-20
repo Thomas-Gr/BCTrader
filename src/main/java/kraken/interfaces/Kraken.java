@@ -1,8 +1,10 @@
 package kraken.interfaces;
 
 import java.util.List;
+import java.util.Set;
 
 import kraken.types.OHLC;
+import kraken.types.ResultHistoryList;
 
 public interface Kraken {
 
@@ -12,7 +14,7 @@ public interface Kraken {
     boolean canBuy(double volume, double price, Double sellPrice);
 
     List<OHLC> getPreviousResults();
-    void closedOrders();
+    Set<ResultHistoryList> getTodaysHistory();
     void refreshOpenOrders();
     void cancelOldQueries();
 }

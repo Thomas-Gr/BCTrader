@@ -3,8 +3,11 @@ package kraken.core;
 import static kraken.Constants.BLOCKCHAIN_TO_CONSIDER;
 import static kraken.Constants.LIMIT;
 
+import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,9 +20,11 @@ import org.apache.logging.log4j.Logger;
 import kraken.api.KrakenApi;
 import kraken.api.KrakenApi.Method;
 import kraken.interfaces.Kraken;
+import kraken.types.History;
 import kraken.types.OHLC;
 import kraken.types.OpenOrder;
 import kraken.types.ResultClosedTradesList;
+import kraken.types.ResultHistoryList;
 import kraken.types.Trades;
 import kraken.util.JsonParser;
 
@@ -147,11 +152,40 @@ public class SimpleKraken implements Kraken {
     }
 
     @Override
-    public void closedOrders() {
+    public Set<ResultHistoryList> getTodaysHistory() {
         try {
-            String response = api.queryPrivate(Method.CLOSED_ORDERS);
+            String yesterday = String.valueOf(Instant.now().toEpochMilli() / 1000 - 24 * 60 * 60);
 
-            logger.info(response);
+            Set<ResultHistoryList> result = new HashSet<>();
+            boolean hasNext;
+            String response = api.queryPrivate(Method.TRADES_HISTORY);
+            do {
+                String lastTime = "ZZZZZ";
+                hasNext = true;
+                History history = JsonParser.getObjectMapper().readValue(
+                        response,
+                        History.class);
+
+                for (ResultHistoryList transaction : history.getResult()
+                        .getClosed()
+                        .values()) {
+                    if (transaction.getTime().compareTo(yesterday) > 0) {
+                        result.add(transaction);
+                    } else {
+                        hasNext = false;
+                    }
+
+                    if (transaction.getTime().compareTo(lastTime) < 0) {
+                        lastTime = transaction.getTime();
+                    }
+                }
+
+                if (hasNext) {
+                    response = api.queryPrivate(Method.TRADES_HISTORY, ImmutableMap.of("end", lastTime));
+                }
+            } while (hasNext);
+
+            return result;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -16,7 +16,7 @@ import kraken.types.OHLC;
 public class SimpleTrader implements Trader {
 
     private static final int INVESTIGATION_PERIOD = 90;
-    private static final int MINUTES_BEFORE_NEW_BUY = 4;
+    private static final int MINUTES_BEFORE_NEW_BUY = 10;
     private int timeBeforeBuying = 0;
 
     @Override
