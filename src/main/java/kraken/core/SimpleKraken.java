@@ -115,7 +115,7 @@ public class SimpleKraken implements Kraken {
                         .filter(order -> order.getValue().getDescr().get("type").equals("sell"))
                         .map(order -> order.getValue().getDescr().get("price"))
                         .map(Double::valueOf)
-                        .anyMatch(value -> Math.abs(value - sellPrice) < sellPrice / 500);
+                        .anyMatch(value -> Math.abs(value - sellPrice) < sellPrice * 0.01);
 
                 if (hasAlreadyCloseOrder) {
                     logger.info("There is already a close sell order for " + sellPrice);
