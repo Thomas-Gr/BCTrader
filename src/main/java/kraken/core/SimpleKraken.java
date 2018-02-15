@@ -1,6 +1,7 @@
 package kraken.core;
 
 import static kraken.Constants.BLOCKCHAIN_TO_CONSIDER;
+import static kraken.Constants.PERCENTAGE_DIFF_BEFORE_BUY_AGAIN;
 import static kraken.Constants.LIMIT;
 
 import java.time.Instant;
@@ -115,7 +116,7 @@ public class SimpleKraken implements Kraken {
                         .filter(order -> order.getValue().getDescr().get("type").equals("sell"))
                         .map(order -> order.getValue().getDescr().get("price"))
                         .map(Double::valueOf)
-                        .anyMatch(value -> Math.abs(value - sellPrice) < sellPrice * 0.01);
+                        .anyMatch(value -> Math.abs(value - sellPrice) < sellPrice * PERCENTAGE_DIFF_BEFORE_BUY_AGAIN);
 
                 if (hasAlreadyCloseOrder) {
                     logger.info("There is already a close sell order for " + sellPrice);

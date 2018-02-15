@@ -12,5 +12,6 @@ public class Constants {
     public static double MACD_MIN = 0.00001;// -0.0001; // -0.05
     public static double PERCENTAGE_BEFORE_BUYING = 0.01;
     public static double PERCENTAGE_BEFORE_SELLING = 0.01;
+    public static double PERCENTAGE_DIFF_BEFORE_BUY_AGAIN = 0.02;
     public static Set<String> BLOCKCHAIN_TO_CONSIDER = ImmutableSet.of("ETHEUR", "LTCEUR");
 }
