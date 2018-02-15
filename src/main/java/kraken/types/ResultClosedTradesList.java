@@ -23,6 +23,8 @@ public class ResultClosedTradesList {
     String vol_exec;
     String cost;
     String fee;
+    String stopprice;
+    String limitprice;
     String price;
     String misc;
     String oflags;
@@ -43,6 +45,8 @@ public class ResultClosedTradesList {
             @JsonProperty("vol_exec") String vol_exec,
             @JsonProperty("cost") String cost,
             @JsonProperty("fee") String fee,
+            @JsonProperty("stopprice") String stopprice,
+            @JsonProperty("limitprice") String limitprice,
             @JsonProperty("price") String price,
             @JsonProperty("misc") String misc,
             @JsonProperty("oflags") String oflags) {
@@ -60,6 +64,8 @@ public class ResultClosedTradesList {
         this.vol_exec = vol_exec;
         this.cost = cost;
         this.fee = fee;
+        this.stopprice = stopprice;
+        this.limitprice = limitprice;
         this.price = price;
         this.misc = misc;
         this.oflags = oflags;
